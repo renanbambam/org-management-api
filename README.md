@@ -22,7 +22,7 @@ The same business domain is also implemented in Java/Quarkus in [`finance-api-qu
 
 ---
 
-## Key capabilities
+## Features
 
 - **Hierarchical RBAC** — five roles (`SUPER_ADMIN`, `ADMIN`, `MANAGER`, `USER`, `CUSTOMER`) enforced declaratively via a `@Roles` decorator + global `RolesGuard`.
 - **JWT auth with refresh-token rotation** — separate access and refresh strategies (Passport), dedicated refresh guard, and a login-validation middleware.
