@@ -1,73 +1,124 @@
+<h1 align="center">Organization Management API</h1>
+
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+  Hardened NestJS REST API for hierarchical organization management — multi-level RBAC, JWT with refresh-token rotation, and OpenAPI docs.
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
+<p align="center">
+  <img alt="NestJS" src="https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white">
+  <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=flat-square&logo=mongodb&logoColor=white">
+  <img alt="JWT" src="https://img.shields.io/badge/Auth-JWT%20%2B%20Refresh-000000?style=flat-square&logo=jsonwebtokens&logoColor=white">
+  <img alt="Swagger" src="https://img.shields.io/badge/OpenAPI-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black">
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Overview
 
-## Installation
+**Organization Management API** is a backend service that models a company's internal structure as a hierarchy — **Company → Branch → User** — and governs every operation through a five-level role-based access-control scheme. It is built on NestJS with a modular, dependency-injected architecture and ships with production-grade request hardening and interactive OpenAPI documentation.
 
-```bash
-$ npm install
+The same business domain is also implemented in Java/Quarkus in [`finance-api-quarkus`](https://github.com/renanbambam/finance-api-quarkus); this repository is the **Node/NestJS** take on it, useful for comparing two backend ecosystems against one specification.
+
+---
+
+## Key capabilities
+
+- **Hierarchical RBAC** — five roles (`SUPER_ADMIN`, `ADMIN`, `MANAGER`, `USER`, `CUSTOMER`) enforced declaratively via a `@Roles` decorator + global `RolesGuard`.
+- **JWT auth with refresh-token rotation** — separate access and refresh strategies (Passport), dedicated refresh guard, and a login-validation middleware.
+- **Globally secured by default** — `JwtAuthGuard` is applied app-wide; endpoints opt out explicitly with an `@Public()` decorator (deny-by-default posture).
+- **Request hardening** — `helmet`, `cookie-parser`, rate limiting (`@nestjs/throttler`), and a strict global `ValidationPipe` (`whitelist` + `forbidNonWhitelisted` + transform).
+- **Self-documenting** — Swagger/OpenAPI UI with bearer auth and custom body/file decorators.
+- **Modular design** — isolated feature modules (`auth`, `user`, `company`, `branch`) over MongoDB via Mongoose.
+
+---
+
+## API surface
+
+Interactive docs are served at **`/api`** (Swagger UI). All routes are protected by default; `auth` routes are public.
+
+### Auth — `/auth`
+| Method | Path | Access | Description |
+|--------|------|--------|-------------|
+| `POST` | `/login` | public | Authenticate, issue access + refresh tokens |
+| `POST` | `/refresh` | refresh token | Rotate tokens |
+
+### Users — `/user`
+| Method | Path | Roles |
+|--------|------|-------|
+| `GET` | `/`, `/all`, `/:id` | `MANAGER`+ / `ADMIN`+ |
+| `POST` | `/`, `/role`, `/promote-demote` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` |
+| `PATCH` / `DELETE` | `/` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` |
+
+### Companies — `/company`
+| Method | Path | Roles |
+|--------|------|-------|
+| `GET` | `/`, `/all`, `/name`, `/:id` | `SUPER_ADMIN` |
+| `POST` | `/` | `SUPER_ADMIN`, `ADMIN` |
+| `PATCH` / `DELETE` | `/` | `SUPER_ADMIN` |
+
+### Branches — `/branch`
+| Method | Path | Roles |
+|--------|------|-------|
+| `GET` / `POST` / `PATCH` / `DELETE` | `/`, `/all`, `/name`, `/:id` | `SUPER_ADMIN`, `ADMIN` |
+
+---
+
+## Architecture
+
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for diagrams (module graph, request pipeline, auth flow, role hierarchy).
+
+```
+src/
+├── auth/        Authentication & authorization
+│   ├── strategies/   JWT + refresh Passport strategies
+│   ├── guards/       JwtAuthGuard · RefreshAuthGuard · RolesGuard
+│   ├── decorators/   @Roles · @Public · @CurrentUser · Swagger helpers
+│   └── middlewares/  login validation
+├── user/        User domain (roles, promotion/demotion)
+├── company/     Company domain
+└── branch/      Branch domain
 ```
 
-## Running the app
+Every feature module follows NestJS layering: `controller → service → schema/entity`, with DTOs validated by `class-validator`.
 
+---
+
+## Getting started
+
+### Prerequisites
+- Node.js 18+
+- MongoDB instance
+- npm
+
+### Configuration
+No secrets are committed. Copy the template and fill it in:
 ```bash
-# development
-$ npm run start
+cp .env.example .env
+```
+| Variable | Description |
+|----------|-------------|
+| `DB_URI` | MongoDB connection string |
+| `JWT_SECRET` / `JWT_EXPIRE` | Access-token signing secret & TTL |
+| `RT_SECRET` / `RT_EXPIRE` | Refresh-token signing secret & TTL |
+| `PORT` | HTTP port (default `3000`) |
 
-# watch mode
-$ npm run start:dev
+### Run
+```bash
+npm install
+npm run start:dev      # watch mode
+```
+Swagger UI: <http://localhost:3000/api>
 
-# production mode
-$ npm run start:prod
+### Quality
+```bash
+npm run lint
+npm test               # unit (Jest)
+npm run test:e2e       # end-to-end
 ```
 
-## Test
+---
 
-```bash
-# unit tests
-$ npm run test
+## Tech stack
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
--   Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
--   Website - [https://nestjs.com](https://nestjs.com/)
--   Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+`NestJS` · `TypeScript` · `MongoDB + Mongoose` · `Passport JWT (access + refresh)` · `class-validator` · `@nestjs/throttler` · `helmet` · `Swagger / OpenAPI`
