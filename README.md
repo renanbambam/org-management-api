@@ -122,3 +122,32 @@ npm run test:e2e       # end-to-end
 ## Tech stack
 
 `NestJS` · `TypeScript` · `MongoDB + Mongoose` · `Passport JWT (access + refresh)` · `class-validator` · `@nestjs/throttler` · `helmet` · `Swagger / OpenAPI`
+
+---
+
+## Testing
+
+```bash
+npm test           # unit (Jest)
+npm run test:e2e   # end-to-end
+```
+
+Continuous integration runs lint, build and the unit suite on every push (GitHub Actions).
+
+---
+
+## Screenshots
+
+Interactive API documentation is served by Swagger UI at `/api`.
+
+<!-- Add real captures to docs/screenshots/ and embed them here, e.g.:
+![Swagger UI](docs/screenshots/swagger.png)
+-->
+
+---
+
+## Future Improvements
+
+- Expand unit and e2e coverage around the full RBAC matrix.
+- Containerize the service with Docker Compose (API + MongoDB).
+- Add structured request/response logging and consistent error responses.
